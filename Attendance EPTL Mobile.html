@@ -986,6 +986,32 @@ function tick() {
 }
 setInterval(tick, 1000); tick();
 
+// ─── Auto Export Function ─────────────────────────────────────
+function autoExportOnOut() {
+  const data = loadData();
+  if (!data.length) return;
+  
+  const now = new Date();
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+  
+  // Create filename with date and timestamp
+  const filename = `attendance_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.json`;
+  
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  
+  showToast(`📁 Auto-exported: ${filename}`, 'blue');
+}
+
 // ─── Punch ────────────────────────────────────────────────────
 document.getElementById('btnIn').addEventListener('click', function(e) {
   const { date, time } = getNow();
@@ -1008,6 +1034,9 @@ document.getElementById('btnOut').addEventListener('click', function(e) {
   saveData(data); renderAll();
   showToast(`🔴 OUT: ${time}`, 'red');
   doRipple(this, e);
+  
+  // Auto-export after successful OUT time recording
+  autoExportOnOut();
 });
 
 function doRipple(btn, e) {
@@ -1203,11 +1232,17 @@ function exportJSON() {
   const data = loadData();
   if (!data.length) { showToast('No data to export', 'red'); return; }
   const now = new Date();
-  const stamp = `${pad(now.getDate())}-${pad(now.getMonth()+1)}-${now.getFullYear()}`;
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth()+1);
+  const year = now.getFullYear();
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+  const filename = `attendance_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.json`;
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `attendance_${stamp}.json`;
+  a.download = filename;
   a.click(); URL.revokeObjectURL(a.href);
   showToast(`💾 Exported ${data.length} records`, 'yellow');
 }
@@ -1271,7 +1306,7 @@ function downloadPDF() {
       <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-family:monospace;${eS}">${eT}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-family:monospace;${lS}">${lT}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-family:monospace;${cS}">${cT}</td>
-    </tr>`;
+     </tr>`;
   }).join('');
 
   const tE = data.reduce((s,r)=>{const x=calcStats(r.in,r.out);return s+(x?x.earlyMin:0);},0);
