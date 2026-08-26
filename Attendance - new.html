@@ -482,10 +482,10 @@
     <h3 id="modalTitle">Add / Edit Entry</h3>
     <label>Date</label>
     <input type="date" id="mDate">
-    <label>IN Time <span style="color:var(--muted);font-weight:400;">(24-hr, HH:MM:SS)</span></label>
-    <input type="text" id="mIn" placeholder="e.g. 10:00:00" inputmode="numeric" maxlength="8" autocomplete="off">
-    <label>OUT Time <span style="color:var(--muted);font-weight:400;">(24-hr, HH:MM:SS)</span></label>
-    <input type="text" id="mOut" placeholder="e.g. 19:02:00" inputmode="numeric" maxlength="8" autocomplete="off">
+    <label>IN Time <span style="color:var(--muted);font-weight:400;">(24-hr — just type digits)</span></label>
+    <input type="text" id="mIn" placeholder="e.g. 100000 → 10:00:00" inputmode="numeric" maxlength="8" autocomplete="off">
+    <label>OUT Time <span style="color:var(--muted);font-weight:400;">(24-hr — just type digits)</span></label>
+    <input type="text" id="mOut" placeholder="e.g. 190000 → 19:00:00" inputmode="numeric" maxlength="8" autocomplete="off">
     <div class="modal-actions">
       <button class="cancel" id="mCancel">Cancel</button>
       <button class="save" id="mSave">Save</button>
@@ -567,6 +567,15 @@
     const mm = pad(parseInt(m[2],10));
     const ss = m[3] !== undefined ? pad(parseInt(m[3],10)) : '00';
     return `${h}:${mm}:${ss}`;
+  }
+  function attachTimeMask(input){
+    input.addEventListener('input', function(){
+      const digits = input.value.replace(/\D/g,'').slice(0,6); // up to HHMMSS
+      let out = digits.slice(0,2);
+      if(digits.length > 2) out += ':' + digits.slice(2,4);
+      if(digits.length > 4) out += ':' + digits.slice(4,6);
+      input.value = out;
+    });
   }
 
   /* ---------------- Business Logic ---------------- */
@@ -770,13 +779,15 @@
   const mDate = document.getElementById('mDate');
   const mIn = document.getElementById('mIn');
   const mOut = document.getElementById('mOut');
+  attachTimeMask(mIn);
+  attachTimeMask(mOut);
 
   function openModal(prefillDate){
     const dateKey = prefillDate || toISODate(getISTNow());
     const rec = records[dateKey] || {};
     mDate.value = dateKey;
-    mIn.value = rec.inTime || '';
-    mOut.value = rec.outTime || '';
+    mIn.value = rec.inTime || '10:00:00';
+    mOut.value = rec.outTime || '19:00:00';
     document.getElementById('modalTitle').textContent = prefillDate ? 'Edit Entry' : 'Add New Entry';
     overlay.classList.add('show');
   }
