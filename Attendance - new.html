@@ -482,10 +482,10 @@
     <h3 id="modalTitle">Add / Edit Entry</h3>
     <label>Date</label>
     <input type="date" id="mDate">
-    <label>IN Time</label>
-    <input type="time" id="mIn" step="1">
-    <label>OUT Time</label>
-    <input type="time" id="mOut" step="1">
+    <label>IN Time <span style="color:var(--muted);font-weight:400;">(24-hr, HH:MM:SS)</span></label>
+    <input type="text" id="mIn" placeholder="e.g. 10:00:00" inputmode="numeric" maxlength="8" autocomplete="off">
+    <label>OUT Time <span style="color:var(--muted);font-weight:400;">(24-hr, HH:MM:SS)</span></label>
+    <input type="text" id="mOut" placeholder="e.g. 19:02:00" inputmode="numeric" maxlength="8" autocomplete="off">
     <div class="modal-actions">
       <button class="cancel" id="mCancel">Cancel</button>
       <button class="save" id="mSave">Save</button>
@@ -556,6 +556,17 @@
     if(!timeStr) return null;
     const [h,m,s] = timeStr.split(':').map(Number);
     return h*60 + m + (s||0)/60;
+  }
+  function normalizeTimeInput(str){
+    if(!str) return null;
+    str = str.trim();
+    if(!str) return null;
+    const m = str.match(/^([01]?\d|2[0-3]):([0-5]?\d)(?::([0-5]?\d))?$/);
+    if(!m) return undefined; // invalid marker
+    const h = pad(parseInt(m[1],10));
+    const mm = pad(parseInt(m[2],10));
+    const ss = m[3] !== undefined ? pad(parseInt(m[3],10)) : '00';
+    return `${h}:${mm}:${ss}`;
   }
 
   /* ---------------- Business Logic ---------------- */
@@ -779,8 +790,18 @@
     const dateKey = mDate.value;
     if(!dateKey){ alert('Please select a date.'); return; }
     if(!records[dateKey]) records[dateKey] = {};
-    if(mIn.value) records[dateKey].inTime = mIn.value.length===5 ? mIn.value+':00' : mIn.value;
-    if(mOut.value) records[dateKey].outTime = mOut.value.length===5 ? mOut.value+':00' : mOut.value;
+
+    if(mIn.value.trim()){
+      const t = normalizeTimeInput(mIn.value);
+      if(t === undefined){ alert('Invalid IN time. Use 24-hour format, e.g. 10:00:00 or 10:00'); return; }
+      records[dateKey].inTime = t;
+    }
+    if(mOut.value.trim()){
+      const t = normalizeTimeInput(mOut.value);
+      if(t === undefined){ alert('Invalid OUT time. Use 24-hour format, e.g. 19:02:00 or 19:02'); return; }
+      records[dateKey].outTime = t;
+    }
+
     saveRecords();
     closeModal();
     // Jump summary/log to the month of the edited entry
